@@ -1,9 +1,9 @@
 import { CreepType } from "Creep.Types";
 import { RoomController } from "Controllers/Controller.Room";
 import { SpawnController } from "./Controllers/Controller.Spawn"
-import { TaskHandler } from "Handler.Task";
+import { TaskHandler } from "Handlers/Handler.Task";
 import { Logging } from "Logging.Helper";
-import { TickHandler } from "Handler.Tick";
+import { TickHandler } from "Handlers/Handler.Tick";
 
 export class LoopExecutor {
     static Execute() {

@@ -1,4 +1,4 @@
-import { TaskHandler } from "Handler.Task";
+import { TaskHandler } from "Handlers/Handler.Task";
 import { TaskStatus } from "./Enums/TaskStatus";
 import { Task } from "./Task";
 import { MovementRequestTask } from "./Task.MovementRequest";

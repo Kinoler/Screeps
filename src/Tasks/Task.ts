@@ -1,5 +1,5 @@
 import { Guid } from "guid-typescript";
-import { TaskHandler } from "Handler.Task";
+import { TaskHandler } from "Handlers/Handler.Task";
 import { TaskExecutionType } from "./Enums/TaskExecutionType";
 import { TaskStatus } from "./Enums/TaskStatus";
 import { MineTask } from "./Task.Mine";
