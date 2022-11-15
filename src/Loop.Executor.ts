@@ -1,19 +1,16 @@
 import { CreepType } from "Creep.Types";
-import { TaskPool } from "Flow.Task";
 import { RoomController } from "Controllers/Controller.Room";
 import { SpawnController } from "./Controllers/Controller.Spawn"
+import { TaskHandler } from "Handler.Task";
+import { Logging } from "Logging.Helper";
+import { TickHandler } from "Handler.Tick";
 
 export class LoopExecutor {
-    Execute() {
-        if (Memory.ResetData === undefined) {
-            Memory.ResetData = false
-        }
-        if (Memory.ResetData) {
-            Memory.ResetData = false
-            LoopExecutor.ResetData()
-        }
+    static Execute() {
+        this.GlobalInit()
+        this.TryResetData()
+        TaskHandler.Init()
 
-        TaskPool.Init()
         for (var roomName in Game.rooms) {
             var room = Game.rooms[roomName]
             RoomController.Init(room);
@@ -28,6 +25,33 @@ export class LoopExecutor {
             var creep = Game.creeps[name];
             var creepController = CreepType.GetController(creep.memory.role.type);
             creepController?.Run(creep);
+        }
+    }
+
+    static GlobalInit()
+    {
+        TickHandler.Execute(10, () => {
+            this.ClearCreepsMemory()
+        })
+    }
+
+    static ClearCreepsMemory() {
+        for (var name in Memory.creeps) {
+            if (!Game.creeps[name]) {
+                delete Memory.creeps[name];
+                Logging.LogDebug(`Clearing non-existing creep memory: ${name}`);
+            }
+        }
+    }
+
+    static TryResetData()
+    {
+        if (Memory.ResetData === undefined) {
+            Memory.ResetData = false
+        }
+        if (Memory.ResetData) {
+            Memory.ResetData = false
+            LoopExecutor.ResetData()
         }
     }
 

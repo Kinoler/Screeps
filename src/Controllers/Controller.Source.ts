@@ -2,7 +2,7 @@ import { Logging } from "../Logging.Helper";
 import { CreepEnum, CreepType } from "../Creep.Types"
 import { ceil, forEach } from "lodash";
 import { Extensions } from "utils/Extensions";
-import { MineTask, TaskPool } from "Flow.Task";
+import { MineTask, TaskPool } from "Handler.Task";
 
 export class SourceController {
     static FirstInit(source: Source)

@@ -1,5 +1,5 @@
 import { CreepController } from "Controllers/Controller.Creep";
-import { MineTask, MovementRequestTask, Task, TaskPool, TaskStatus } from "Flow.Task";
+import { MineTask, MovementRequestTask, Task, TaskPool, TaskStatus } from "Handler.Task";
 
 export class MinerController extends CreepController {
     Run(creep: Creep): void {

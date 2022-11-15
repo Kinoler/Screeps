@@ -19,7 +19,6 @@ export class CreepType {
         this.type = name;
     }
 
-
     static GetController(type: string) {
         switch (type) {
             case CreepEnum.BUILDER:

@@ -1,5 +1,5 @@
 import { CreepType } from "Creep.Types";
-import { Task } from "Flow.Task";
+import { Task } from "Tasks/Task";
 import { ErrorMapper } from "utils/ErrorMapper";
 import { LoopExecutor } from "./Loop.Executor"
 
@@ -52,6 +52,5 @@ declare global {
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() => {
   Memory.IsDebugLoggingEnabled = true;
-  var loopExecutor = new LoopExecutor();
-  loopExecutor.Execute();
+  LoopExecutor.Execute();
 });

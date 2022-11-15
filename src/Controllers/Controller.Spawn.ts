@@ -47,15 +47,6 @@ export class SpawnController {
         Logging.LogDebug('The Spawn "' + this.SpawnName + '" spawning new ' + type.type + ': ' + newName + ' with result: ' + result);
     }
 
-    UpToDateCreepsMemory() {
-        for (var name in Memory.creeps) {
-            if (!Game.creeps[name]) {
-                //delete Memory.creeps[name];
-                Logging.LogDebug('Clearing non-existing creep memory:' + name);
-            }
-        }
-    }
-
     ShowSpawnText() {
         if (this.Spawn.spawning) {
             var spawningCreep = Game.creeps[this.Spawn.spawning.name];
@@ -159,11 +150,10 @@ export class SpawnController {
     }
 
     Init() {
-        this.UpToDateCreepsMemory();
-
         if (this.Spawn.spawning){
             return;
         }
+
         var create = [CreepEnum.MINER, CreepEnum.PULLER]
         for (const key in Game.creeps) {
             const creep = Game.creeps[key];
