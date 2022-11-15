@@ -1,7 +1,8 @@
-import { MinerController } from "Creep.Controller.Miner";
-import { BuilderController } from "./Creep.Controller.Builder"
-import { HarvesterController } from "./Creep.Controller.Harvester"
-import { UpgraderController } from "./Creep.Controller.Upgrader"
+import { MinerController } from "Controllers/Controller.Creep.Miner";
+import { PullerController } from "Controllers/Controller.Creep.Puller";
+import { BuilderController } from "./Controllers/Controller.Creep.Builder"
+import { HarvesterController } from "./Controllers/Controller.Creep.Harvester"
+import { UpgraderController } from "./Controllers/Controller.Creep.Upgrader"
 
 export enum CreepEnum {
     BUILDER = "builder",
@@ -30,7 +31,7 @@ export class CreepType {
             case CreepEnum.MINER:
                 return new MinerController();
             case CreepEnum.PULLER:
-                return new MinerController();
+                return new PullerController();
             default:
                 break;
         }

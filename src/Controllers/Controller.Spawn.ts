@@ -1,5 +1,5 @@
-import {Logging} from "./Logging.Helper";
-import { CreepEnum, CreepType } from "./Creep.Types"
+import {Logging} from "../Logging.Helper";
+import { CreepEnum, CreepType } from "../Creep.Types"
 import { ceil, forEach, object } from "lodash";
 
 export class SpawnController {
@@ -50,7 +50,7 @@ export class SpawnController {
     UpToDateCreepsMemory() {
         for (var name in Memory.creeps) {
             if (!Game.creeps[name]) {
-                delete Memory.creeps[name];
+                //delete Memory.creeps[name];
                 Logging.LogDebug('Clearing non-existing creep memory:' + name);
             }
         }
@@ -159,24 +159,27 @@ export class SpawnController {
     }
 
     Init() {
-
         this.UpToDateCreepsMemory();
 
         if (this.Spawn.spawning){
             return;
         }
-        var creepType = undefined;
-        if (Object.keys(Game.creeps).length == 0) {
-            creepType = new CreepType(CreepEnum.MINER);
-        }
-        if (Object.keys(Game.creeps).length == 1) {
-            creepType = new CreepType(CreepEnum.PULLER);
+        var create = [CreepEnum.MINER, CreepEnum.PULLER]
+        for (const key in Game.creeps) {
+            const creep = Game.creeps[key];
+            if (creep) {
+                create = create.filter(el => el != creep.memory.role.type)
+            }
         }
 
-        if (creepType && this.EnergyIsFull()) {
-            var body = this.CreateCreepBody(creepType.type);
-            this.SpawnCreep(creepType, body);
+        if (create.length > 0) {
+            var creepType = new CreepType(create[0]);
+            if (creepType && this.EnergyIsFull()) {
+                var body = this.CreateCreepBody(creepType.type);
+                this.SpawnCreep(creepType, body);
+            }
         }
+
 
         this.ShowSpawnText();
         return;

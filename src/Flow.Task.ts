@@ -16,8 +16,8 @@ export enum TaskStatus{
 
 export abstract class Task {
     Id: string;
-    Creator: string;
-    Worker: string[];
+    Creator: Id<_HasId>;
+    Worker: Id<_HasId>[];
     TaskName: string;
     Data: any;
     ExecutionType: TaskExecutionType;
@@ -26,7 +26,7 @@ export abstract class Task {
     BlockedBy: string;
     Block: string[];
 
-    constructor(creator: string) {
+    constructor(creator: Id<_HasId>) {
         this.Id = Guid.create().toString();
         this.BlockedBy = "";
         this.Block = [];
@@ -37,62 +37,84 @@ export abstract class Task {
         this.Status = TaskStatus.Open;
     }
 
-    GetFirstWorkerCreep(): Creep | null {
-        if (this.Worker.length > 0) {
-            var creepId = this.Worker[0]
-            return Game.creeps[creepId]
+    static GetFirstWorkerCreep(task: Task): Creep | null {
+        if (task.Worker.length > 0) {
+            var creepId = task.Worker[0] as Id<Creep>
+            return Game.getObjectById<Creep>(creepId);
         }
 
         return null
     }
 
-    GetCreatorCreep(): Creep | null {
-        return Game.creeps[this.Creator]
+    static GetCreatorCreep(task: Task): Creep | null {
+        return Game.getObjectById<Creep>(task.Creator as Id<Creep>);
     }
 
-    Execute()
+    static GetCreator<T extends _HasId>(task: Task): T | null {
+        return Game.getObjectById<T>(task.Creator as Id<T>);
+    }
+
+    static Execute(task: Task)
     {
-        if (this.Status == TaskStatus.Blocked) {
+        if (task.Status == TaskStatus.Blocked) {
             return;
         }
 
-        var newTaskStatus = this.ExecuteTask();
+        var newTaskStatus = Task.ExecuteSwitch(task);
         if (newTaskStatus == TaskStatus.Completed) {
-            TaskPool.CompleteTask(this)
+            TaskPool.CompleteTask(task)
         }
 
-        this.Status = newTaskStatus
+        task.Status = newTaskStatus
     }
 
-    protected abstract ExecuteTask(): TaskStatus;
+    private static ExecuteSwitch(task: Task): TaskStatus
+    {
+        switch (task.TaskName) {
+            case MovementRequestTask.TaskName:
+                return MovementRequestTask.ExecuteTask(task as MovementRequestTask)
+            case MineTask.TaskName:
+                return MineTask.ExecuteTask(task as MineTask)
+            default:
+                return TaskStatus.Open
+        }
+    }
 }
 
 export class MovementRequestTask extends Task {
-    static TaskName: string = typeof(MovementRequestTask).name;
+    static TaskName: string = "MovementRequestTask";
     Target: RoomPosition;
 
-    constructor(creator: string, target: RoomPosition) {
+    constructor(creator: Id<_HasId>, target: RoomPosition) {
         super(creator)
         this.TaskName = MovementRequestTask.TaskName;
         this.Target = target;
     }
 
-    ExecuteTask(): TaskStatus {
-        var workerCreep = this.GetFirstWorkerCreep();
-        var creatorCreep = this.GetCreatorCreep();
+    static ExecuteTask(task: MovementRequestTask): TaskStatus {
+        var workerCreep = Task.GetFirstWorkerCreep(task);
+        var creatorCreep = Task.GetCreatorCreep(task);
 
         if (workerCreep && creatorCreep) {
-            if (creatorCreep.pos == this.Target) {
+
+            if (creatorCreep.pos.x == task.Target.x && creatorCreep.pos.y == task.Target.y) {
                 return TaskStatus.Completed;
             }
             if (workerCreep.pull(creatorCreep) == ERR_NOT_IN_RANGE) {
+                console.log("Puller to creatorCreep")
                 workerCreep.moveTo(creatorCreep);
             } else {
                 creatorCreep.move(workerCreep);
-                if(workerCreep.pos.isNearTo(this.Target)) {
+                console.log(`Puller coord = ${workerCreep.pos}`)
+                console.log(`Target coord = ${task.Target as RoomPosition}`)
+                console.log(`Puller equals Target = ${workerCreep.pos.isEqualTo(task.Target as RoomPosition)}`)
+                if(workerCreep.pos.x == task.Target.x && workerCreep.pos.y == task.Target.y) {
+                    console.log("Puller isNearTo Target")
                     workerCreep.move(workerCreep.pos.getDirectionTo(creatorCreep));
                 } else {
-                    workerCreep.moveTo(this.Target);
+                    console.log("Puller to target " + JSON.stringify(task.Target))
+                    var path = PathFinder.search(workerCreep.pos, task.Target)
+                    workerCreep.move(workerCreep.pos.getDirectionTo(path.path[0]));
                 }
             }
         }
@@ -102,35 +124,40 @@ export class MovementRequestTask extends Task {
 }
 
 export class MineTask extends Task {
-    static TaskName: string = typeof(MineTask).name;
+    static TaskName: string = "MineTask";
     MinePosition: RoomPosition;
 
-    constructor(creator: string, minePosition: RoomPosition) {
+    constructor(creator: Id<_HasId>, minePosition: RoomPosition) {
         super(creator)
         this.TaskName = MineTask.TaskName;
         this.MinePosition = minePosition;
     }
 
-    ExecuteTask(): TaskStatus
+    static ExecuteTask(task: MineTask): TaskStatus
     {
-        var creep = this.GetFirstWorkerCreep();
+        var creep = Task.GetFirstWorkerCreep(task);
+        console.log("execute MineTask by " + creep)
         if (creep) {
-            if (creep.pos == this.MinePosition)
+            if (creep.pos.x == task.MinePosition.x && creep.pos.y == task.MinePosition.y)
             {
-                var source = creep.room.find(FIND_SOURCES, {filter: source => source.id == this.Id}).shift()
+                var source = Task.GetCreator<Source>(task)
                 if (source)
                 {
                     var result = creep.harvest(source)
                     if (result != 0)
-                    {
-                        console.log(`Error in task. Name = ${this.TaskName}. Task result = ${result}`);
-                    }
+                        console.log(`Error in task. Name = ${task.TaskName}. Task result = ${result}`);
+                }
+                else
+                {
+                    console.log(`Error in task. Name = ${task.TaskName}. Source does not found`);
                 }
             }
             else
             {
-                var creepController = CreepType.GetController(creep.memory.role.type);
-                creepController?.MoveTo(creep, this.MinePosition);
+                var movementRequestTask = new MovementRequestTask(creep.id, task.MinePosition);
+                TaskPool.CreateTask(movementRequestTask)
+                TaskPool.SetBlocker(task, movementRequestTask)
+                return TaskStatus.Blocked
             }
         }
 
@@ -156,11 +183,12 @@ export class TaskPool {
     }
 
     static SearchTasks(taskName: string){
-        return TaskPool.Instance.TaskContainer.filter(task => task.TaskName == taskName);
+        return TaskPool.Instance.TaskContainer.filter(task => task.Status == TaskStatus.Open && task.TaskName == taskName);
     }
 
-    static GetTaskById(id: string) {
-        return TaskPool.Instance.TaskContainer.find(task => task.Id == id);
+    static GetTaskById(id: string): Task | undefined {
+        var task = TaskPool.Instance.TaskContainer.find(task => task && task.Id == id);
+        return task;
     }
 
     static TakeTask(taskId: string, worker: Creep) {
@@ -176,7 +204,7 @@ export class TaskPool {
         TaskPool.Instance.TaskContainer.push(task);
     }
 
-    static SetBlocker(task: Task, bloker: Task){
+    static SetBlocker(task: Task, bloker: Task) {
         task.Status = TaskStatus.Blocked;
         task.BlockedBy = bloker.Id;
         bloker.Block.push(task.Id);
@@ -195,8 +223,10 @@ export class TaskPool {
                     this.RemoveBlocker(blokedTask)
             }
         }
-        var index = Memory.tasks.findIndex(task => task.Id == completedTask.Id)
-        delete  Memory.tasks[index]
+        var creep = Task.GetFirstWorkerCreep(completedTask);
+        if (creep) {
+            creep.memory.currentTaskId = ""
+        }
+        Memory.tasks = Memory.tasks.filter(task => task.Id != completedTask.Id)
     }
-
 }

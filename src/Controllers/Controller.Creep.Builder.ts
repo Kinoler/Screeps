@@ -1,5 +1,5 @@
-import { HarvesterController } from "Creep.Controller.Harvester";
-import { CreepController } from "./Creep.Controller"
+import { HarvesterController } from "Controllers/Controller.Creep.Harvester";
+import { CreepController } from "./Controller.Creep"
 
 export class BuilderController extends CreepController {
     /** @param {Creep} creep **/

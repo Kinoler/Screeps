@@ -14,6 +14,7 @@ declare global {
   */
   // Memory extension samples
   interface Memory {
+    ResetData: boolean
     IsDebugLoggingEnabled: boolean;
     StorageOfCPU: {[id: string] : number[]}
     tasks: Task[]

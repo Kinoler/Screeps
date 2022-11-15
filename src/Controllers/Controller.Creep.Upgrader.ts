@@ -1,4 +1,4 @@
-import { CreepController } from "./Creep.Controller"
+import { CreepController } from "./Controller.Creep"
 
 export class UpgraderController extends CreepController {
     Run(creep: Creep) {
